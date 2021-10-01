@@ -1,0 +1,65 @@
+{
+  "name": "next-api-og-image",
+  "version": "1.0.0",
+  "description": "Generate OG Images dynamically using Next.js API Routes.",
+  "scripts": {
+    "prepublishOnly": "npm run build",
+    "prebuild": "rimraf lib",
+    "build": "microbundle",
+    "build:watch": "microbundle watch"
+  },
+  "author": {
+    "name": "Igor Klepacki",
+    "email": "neg4n@icloud.com",
+    "url": "https://neg4n.dev/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/neg4n/next-api-og-image"
+  },
+  "keywords": [
+    "nextjs",
+    "nextjs-plugin",
+    "react",
+    "next-middleware",
+    "serverless",
+    "next-api"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/neg4n/next-api-og-image/issues"
+  },
+  "homepage": "https://github.com/neg4n/next-api-og-image#readme",
+  "source": "src/index.ts",
+  "main": "./lib/next-api-og-image.cjs",
+  "module": "./lib/next-api-og-image.module.js",
+  "unpkg": "./lib/next-api-og-image.umd.js",
+  "types": "./lib/index.d.ts",
+  "files": [
+    "lib"
+  ],
+  "peerDependencies": {
+    "next": ">=9.0.0",
+    "react": ">=16.0.0",
+    "react-dom": ">=16.0.0"
+  },
+  "prettier": {
+    "printWidth": 90,
+    "tabWidth": 2,
+    "useTabs": false,
+    "semi": false,
+    "singleQuote": true,
+    "trailingComma": "all"
+  },
+  "devDependencies": {
+    "@types/node": "^16.10.2",
+    "microbundle": "^0.13.3",
+    "prettier": "^2.4.1",
+    "rimraf": "^3.0.2",
+    "typescript": "^4.4.3"
+  },
+  "dependencies": {
+    "chrome-aws-lambda": "^10.1.0",
+    "puppeteer-core": "^10.4.0"
+  }
+}
