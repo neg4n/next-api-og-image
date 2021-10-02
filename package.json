@@ -2,6 +2,7 @@
   "name": "next-api-og-image",
   "version": "1.0.0",
   "description": "Generate OG Images dynamically using Next.js API Routes.",
+  "private": true,
   "scripts": {
     "prepublishOnly": "npm run build",
     "prebuild": "rimraf lib",
@@ -44,7 +45,7 @@
     "react-dom": ">=16.0.0"
   },
   "prettier": {
-    "printWidth": 90,
+    "printWidth": 110,
     "tabWidth": 2,
     "useTabs": false,
     "semi": false,
@@ -56,6 +57,7 @@
     "microbundle": "^0.13.3",
     "prettier": "^2.4.1",
     "rimraf": "^3.0.2",
+    "ts-node": "^10.2.1",
     "typescript": "^4.4.3"
   },
   "dependencies": {
