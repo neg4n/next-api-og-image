@@ -4,20 +4,10 @@ import core from 'puppeteer-core'
 import chrome from 'chrome-aws-lambda'
 
 export type NextApiOgImageConfig<QueryType extends string> = {
-  html: (...queryParams: Record<QueryType, string | string[]>[]) => string
+  html: (...queryParams: Record<QueryType, string | string[]>[]) => string | Promise<string>
+  contentType?: string
+  cacheControl?: string
 }
-
-export type NextApiOgImageRequest = NextApiRequest & Partial<{ ogimage: Buffer }>
-
-export type ExtendableNextApiRequest<T> = T extends NextApiRequest ? T : NextApiRequest
-export type ExtendableNextApiResponse<T, DataType = any> = T extends NextApiResponse
-  ? T
-  : NextApiResponse<DataType>
-
-export type ExtendedNextApiHandler<RequestType, ResponseType = NextApiResponse, DataType = any> = (
-  request: ExtendableNextApiRequest<RequestType>,
-  response: ExtendableNextApiResponse<ResponseType, DataType>,
-) => void | Promise<void>
 
 type BrowserEnvironment = {
   mode: 'development' | 'production'
@@ -26,22 +16,33 @@ type BrowserEnvironment = {
   screenshot: (html: string) => Promise<Buffer>
 }
 
-export function withOGImage<QueryType extends string>(
-  handler: ExtendedNextApiHandler<NextApiOgImageRequest>,
-  options: NextApiOgImageConfig<QueryType>,
-) {
+export function withOGImage<QueryType extends string>(options: NextApiOgImageConfig<QueryType>) {
   const createBrowserEnvironment = pipe(getMode, getChromiumExecutable, prepareWebPage, createScreenshooter)
 
-  const { html: htmlTemplate } = options
+  const defaultOptions: Omit<NextApiOgImageConfig<QueryType>, 'html'> = {
+    contentType: 'image/png',
+    cacheControl: 'max-age 3600, must-revalidate',
+  }
 
-  return async function (request: NextApiOgImageRequest, response: NextApiResponse) {
+  options = { ...defaultOptions, ...options }
+
+  const { html: htmlTemplate, cacheControl, contentType } = options
+
+  if (!htmlTemplate) {
+    throw new Error('Missing html template')
+  }
+
+  return async function (request: NextApiRequest, response: NextApiResponse) {
     const { query } = request
     const browserEnvironment = await createBrowserEnvironment()
 
-    const html = htmlTemplate({ ...query } as Record<QueryType, string | string[]>)
-    request.ogimage = await browserEnvironment.screenshot(html)
+    const html = await htmlTemplate({ ...query } as Record<QueryType, string | string[]>)
 
-    handler(request, response)
+    response.setHeader('Content-Type', contentType)
+    response.setHeader('Cache-Control', cacheControl)
+
+    response.write(await browserEnvironment.screenshot(html))
+    response.end()
   }
 }
 
