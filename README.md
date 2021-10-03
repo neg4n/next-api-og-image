@@ -1,4 +1,4 @@
-# Next.js API OG Image
+# Next.js API OG Image &middot; [![version](https://badgen.net/npm/v/next-api-og-image)](https://www.npmjs.com/package/next-api-og-image) [![types](https://badgen.net/npm/types/next-api-og-image)](https://www.npmjs.com/package/next-api-og-image) [![license](https://badgen.net/npm/license/next-api-og-image)](https://github.com/neg4n/next-api-og-image/blob/main/LICENSE)
 
 Simple library with purpose of providing easy way to dynamically  
 generate open-graph images using [Next.js API routes][next-api-routes].
@@ -34,12 +34,13 @@ _if you send GET HTTP request to [api route][next-api-routes] with code presente
 
 Apart from `html` configuration property _(which is required)_, you can specify [Content-Type][content-type] and [Cache-Control][cache-control] headers!
 
-Example configuration with **default values** *(apart from required html prop)*:
+Example configuration with **default values** _(apart from required html prop)_:
+
 ```js
 const nextApiOgImageConfig = {
   /* Remember to specify `html` manually !!! */
   contentType: 'image/png',
-  cacheControl: 'max-age 3600, must-revalidate'
+  cacheControl: 'max-age 3600, must-revalidate',
 }
 ```
 
