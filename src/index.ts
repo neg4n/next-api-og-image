@@ -72,7 +72,7 @@ export function fontFilesToBase64(
   const fontExtension = extension || 'woff2'
 
   return fonts.map((font) => {
-    const fontPath = path.join(path.resolve(fontsDirectory), `${font}.${fontExtension}`)
+    const fontPath = path.join(fontsDirectory, `${font}.${fontExtension}`)
     const fontFile = fs.readFileSync(fontPath)
     return fontFile.toString('base64')
   })
