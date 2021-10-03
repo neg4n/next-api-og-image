@@ -1,3 +1,5 @@
+import { interRegular } from '../../fonts/inter'
+
 export default withOGImage({
   html: ({ myQueryParam }) =>
     `<style>
