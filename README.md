@@ -50,6 +50,7 @@ You can find more examples here:
 
 - JavaScript
   - [Basic usage with JavaScript][basic]
+  - [Basic usage with loading custom fonts][basic-fonts]
 - TypeScript
   - [Basic usage with TypeScript][basic-typescript]
 
@@ -67,3 +68,4 @@ All contributions are welcome.
 [cache-control]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
 [basic-typescript]: https://github.com/neg4n/next-api-og-image/tree/main/example/pages/api/basic-typescript.ts
 [basic]: https://github.com/neg4n/next-api-og-image/tree/main/example/pages/api/basic.js
+[basic-fonts]: https://github.com/neg4n/next-api-og-image/tree/main/example/pages/api/basic-custom-fonts.js
