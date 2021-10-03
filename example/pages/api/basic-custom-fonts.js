@@ -1,6 +1,4 @@
-import * as path from 'path'
-import * as fs from 'fs/promises'
-import { withOGImage } from 'next-api-og-image'
+import { withOGImage, fontFilesToBase64 } from 'next-api-og-image'
 
 export default withOGImage({
   html: async ({ myQueryParam }) => {
@@ -21,15 +19,3 @@ export default withOGImage({
     <h1>${myQueryParam}</h1>`
   },
 })
-
-async function fontFilesToBase64(fonts) {
-  const fontsDirectory = path.resolve('fonts')
-
-  return await Promise.all(
-    fonts.map(async (font) => {
-      const fontPath = path.join(fontsDirectory, `${font}.woff2`)
-      const fontFile = await fs.readFile(fontPath)
-      return fontFile.toString('base64')
-    }),
-  )
-}
