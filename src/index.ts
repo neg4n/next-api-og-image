@@ -94,7 +94,7 @@ async function prepareWebPage(browserEnvironment: BrowserEnvironment) {
     return { ...browserEnvironment, page }
   }
 
-  const chromiumOptions = mode
+  const chromiumOptions = mode === 'development'
     ? { args: [], executablePath: executable, headless: true }
     : {
         args: chrome.args,
