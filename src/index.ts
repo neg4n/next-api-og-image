@@ -64,13 +64,16 @@ function emojify(html: string) {
   return `<style>${emojiStyle}</style>${emojified}`
 }
 
-export async function fontFilesToBase64(fonts: Array<string>, extension?: string): Promise<Array<string>> {
-  const fontsDirectory = path.resolve('fonts')
+export async function fontFilesToBase64(
+  fonts: Array<string>,
+  fontsDirectory: string,
+  extension?: string,
+): Promise<Array<string>> {
   const fontExtension = extension || 'woff2'
 
   return await Promise.all(
     fonts.map(async (font) => {
-      const fontPath = path.join(fontsDirectory, `${font}.${fontExtension}`)
+      const fontPath = path.join(path.resolve(fontsDirectory), `${font}.${fontExtension}`)
       const fontFile = await fs.readFile(fontPath)
       return fontFile.toString('base64')
     }),
