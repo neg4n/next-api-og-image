@@ -2,7 +2,6 @@
   "name": "next-api-og-image",
   "version": "1.0.0",
   "description": "Easy way to generate open-graph images dynamically using Next.js API Routes.",
-  "private": true,
   "scripts": {
     "prepublishOnly": "npm run build",
     "prebuild": "rimraf lib",
