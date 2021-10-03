@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import type { Page } from 'puppeteer-core'
 import twemoji from 'twemoji'
 import path from 'path'
-import fs from 'fs/promises'
+import fs from 'fs'
 import core from 'puppeteer-core'
 import chrome from 'chrome-aws-lambda'
 
@@ -64,20 +64,18 @@ function emojify(html: string) {
   return `<style>${emojiStyle}</style>${emojified}`
 }
 
-export async function fontFilesToBase64(
+export function fontFilesToBase64(
   fonts: Array<string>,
   fontsDirectory: string,
   extension?: string,
-): Promise<Array<string>> {
+): Array<string> {
   const fontExtension = extension || 'woff2'
 
-  return await Promise.all(
-    fonts.map(async (font) => {
-      const fontPath = path.join(path.resolve(fontsDirectory), `${font}.${fontExtension}`)
-      const fontFile = await fs.readFile(fontPath)
-      return fontFile.toString('base64')
-    }),
-  )
+  return fonts.map((font) => {
+    const fontPath = path.join(path.resolve(fontsDirectory), `${font}.${fontExtension}`)
+    const fontFile = fs.readFileSync(fontPath)
+    return fontFile.toString('base64')
+  })
 }
 
 function pipe(...functions: Array<Function>): () => Promise<BrowserEnvironment> {
