@@ -112,13 +112,14 @@ async function prepareWebPage(browserEnvironment: BrowserEnvironment) {
     return { ...browserEnvironment, page }
   }
 
-  const chromiumOptions = mode
-    ? { args: [], executablePath: executable, headless: true }
-    : {
-        args: chrome.args,
-        executablePath: await chrome.executablePath,
-        headless: chrome.headless,
-      }
+  const chromiumOptions =
+    mode === 'development'
+      ? { args: [], executablePath: executable, headless: true }
+      : {
+          args: chrome.args,
+          executablePath: await chrome.executablePath,
+          headless: chrome.headless,
+        }
 
   const browser = await core.launch(chromiumOptions)
   const newPage = await browser.newPage()
