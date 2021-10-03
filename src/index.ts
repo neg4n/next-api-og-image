@@ -7,7 +7,7 @@ import core from 'puppeteer-core'
 import chrome from 'chrome-aws-lambda'
 
 export type NextApiOgImageConfig<QueryType extends string> = {
-  html: (...queryParams: Record<QueryType, string | string[]>[]) => string | Promise<string>
+  html: (...queryParams: Array<Record<QueryType, string | Array<string>>>) => string | Promise<string>
   contentType?: string
   cacheControl?: string
 }
@@ -77,7 +77,7 @@ export async function fontFilesToBase64(fonts: Array<string>, extension?: string
   )
 }
 
-function pipe(...functions: Function[]): () => Promise<BrowserEnvironment> {
+function pipe(...functions: Array<Function>): () => Promise<BrowserEnvironment> {
   return async function () {
     return await functions.reduce(
       async (acc, fn) => await fn(await acc),
