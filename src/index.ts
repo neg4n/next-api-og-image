@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import type { Page } from 'puppeteer-core'
+import twemoji from 'twemoji'
 import core from 'puppeteer-core'
 import chrome from 'chrome-aws-lambda'
 
@@ -41,9 +42,24 @@ export function withOGImage<QueryType extends string>(options: NextApiOgImageCon
     response.setHeader('Content-Type', contentType)
     response.setHeader('Cache-Control', cacheControl)
 
-    response.write(await browserEnvironment.screenshot(html))
+    response.write(await browserEnvironment.screenshot(emojify(html)))
     response.end()
   }
+}
+
+function emojify(html: string) {
+  const emojified = twemoji.parse(html, { folder: 'svg', ext: '.svg' })
+
+  const emojiStyle = `
+  .emoji {
+    height: 1em;
+    width: 1em;
+    margin: 0 .05em 0 .1em;
+    vertical-align: -0.1em;
+  }
+  `
+
+  return `<style>${emojiStyle}</style>${emojified}`
 }
 
 function pipe(...functions: Function[]): () => Promise<BrowserEnvironment> {
