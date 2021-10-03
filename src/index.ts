@@ -1,11 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import type { Page } from 'puppeteer-core'
 import twemoji from 'twemoji'
+import path from 'path'
+import fs from 'fs/promises'
 import core from 'puppeteer-core'
 import chrome from 'chrome-aws-lambda'
 
 export type NextApiOgImageConfig<QueryType extends string> = {
-  html: (...queryParams: Record<QueryType, string | string[]>[]) => string | Promise<string>
+  html: (...queryParams: Array<Record<QueryType, string | Array<string>>>) => string | Promise<string>
   contentType?: string
   cacheControl?: string
 }
@@ -62,7 +64,20 @@ function emojify(html: string) {
   return `<style>${emojiStyle}</style>${emojified}`
 }
 
-function pipe(...functions: Function[]): () => Promise<BrowserEnvironment> {
+export async function fontFilesToBase64(fonts: Array<string>, extension?: string): Promise<Array<string>> {
+  const fontsDirectory = path.resolve('fonts')
+  const fontExtension = extension || 'woff2'
+
+  return await Promise.all(
+    fonts.map(async (font) => {
+      const fontPath = path.join(fontsDirectory, `${font}.${fontExtension}`)
+      const fontFile = await fs.readFile(fontPath)
+      return fontFile.toString('base64')
+    }),
+  )
+}
+
+function pipe(...functions: Array<Function>): () => Promise<BrowserEnvironment> {
   return async function () {
     return await functions.reduce(
       async (acc, fn) => await fn(await acc),
