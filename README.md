@@ -32,15 +32,23 @@ _if you send GET HTTP request to [api route][next-api-routes] with code presente
 
 ## Configuration
 
-Apart from `html` configuration property _(which is required)_, you can specify [Content-Type][content-type] and [Cache-Control][cache-control] headers!
+Apart from `html` configuration property _(which is required)_, you can specify [Content-Type][content-type] and [Cache-Control][cache-control] headers and much more.
 
 Example configuration with **default values** _(apart from required html prop)_:
 
 ```js
 const nextApiOgImageConfig = {
   /* Remember to specify `html` manually !!! */
+  // ------------------------------------------
+  // 'Content-Type' HTTP header
   contentType: 'image/png',
+  // 'Cache-Control' HTTP header
   cacheControl: 'max-age 3600, must-revalidate',
+  // NOTE: These options works only when process.env.NODE_ENV === 'development'
+  dev: {
+    // Whether to display HTML in place of binary data (image/screenshot)
+    inspectHtml: true,
+  },
 }
 ```
 
