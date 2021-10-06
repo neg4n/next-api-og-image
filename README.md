@@ -59,6 +59,9 @@ export default function myTemplate({ myQueryParam }) {
 then importing it and embedding in the `withOGImage`.
 
 
+### Loading custom local fonts
+
+In order to load custom fonts from the project source, you need to create source file with your font in **base64** format or simply bind the font file content to the variable in your [Next.js API route][next-api-routes]
 
 ## Configuration
 
@@ -81,16 +84,13 @@ const nextApiOgImageConfig = {
 }
 ```
 
-## Loading custom local fonts
-
-In order to load custom fonts from the project source, you need to create source file with your font in **base64** format or simply bind the font file content to the variable in your [Next.js API route][next-api-routes]
-
 ## Examples
 
 You can find more examples here:
 
 - JavaScript
   - [Basic usage with JavaScript][basic]
+  - [Basic usage with TailwindCSS][basic-tailwind]
   - [Basic usage with loading custom local fonts][basic-fonts-local]
 - TypeScript
   - [Basic usage with TypeScript][basic-typescript]
@@ -112,6 +112,7 @@ All contributions are welcome.
 [content-type]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type
 [cache-control]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
 [basic-typescript]: https://github.com/neg4n/next-api-og-image/tree/main/example/pages/api/basic-typescript.ts
+[basic-tailwind]: https://github.com/neg4n/next-api-og-image/tree/main/example/pages/api/basic-tailwind.js 
 [basic]: https://github.com/neg4n/next-api-og-image/tree/main/example/pages/api/basic.js
 [basic-fonts-local]: https://github.com/neg4n/next-api-og-image/tree/main/example/pages/api/basic-custom-fonts-local.js
 
