@@ -7,6 +7,7 @@ export default withOGImage<'testQueryParam'>({
         <body>
           <h1>${testQueryParam}</h1>
         </body>
-      </html>`
+      </html>
+    `
   },
 })
