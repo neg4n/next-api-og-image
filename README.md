@@ -5,7 +5,7 @@ generate open-graph images using [Next.js API routes][next-api-routes].
 
 If you're not familiar with dynamic open-graph images concept - please see [vercel/og-image repository's README][vercel-og-image] for very detailed explaination.
 
-*you can treat this project as simpler and configurable version of mentioned earlier [vercel][vercel] repository*
+_you can treat this project as simpler and configurable version of mentioned earlier [vercel][vercel] repository_
 
 ## Features
 
@@ -31,15 +31,16 @@ export default withOGImage({ html: ({ myQueryParam }) => `<h1>${myQueryParam}</h
 
 ## Creating template
 
-You've may noticed the `html` property in configuration. Its responsibility is to provide HTML document to image creator *(browser screenshot)*, filled with your values.
+You've may noticed the `html` property in configuration. Its responsibility is to provide HTML document to image creator _(browser screenshot)_, filled with your values.
 
 ### Specification
 
-The `html` property is a function *(**it can be asynchronous**)* which first (and only) parameter is nothing else but [HTTP request's query params][query-params] converted to object notation.
+The `html` property is a function _(**it can be asynchronous**)_ which first (and only) parameter is nothing else but [HTTP request's query params][query-params] converted to object notation.
 
 This allows you to create fully customized HTML templates by simply accessing these parameters. The preferred way to do that is [object destructuring][object-destructuring].
 
 #### Example
+
 ```js
 import { withOGImage } from 'next-api-og-image'
 
@@ -50,9 +51,21 @@ _if you send GET HTTP request to [api route][next-api-routes] with code presente
 
 ### Splitting files
 
-Keeping all the templates inline within [Next.js API route][next-api-routes] should not be problematic, but if you prefer keeping things in separate files you can follow the common pattern of creating files like `my-template.html.js` with code e.g. 
+Keeping all the templates inline within [Next.js API route][next-api-routes] should not be problematic, but if you prefer keeping things in separate files you can follow the common pattern of creating files like `my-template.html.js` with code e.g.
+
 ```js
 export default function myTemplate({ myQueryParam }) {
+  return `<h1>${myQueryParam}</h1>`
+}
+```
+
+...or in TypeScript
+
+```ts
+import type { NextApiOgImageQuery } from 'next-api-og-image'
+
+type QueryParams = 'myQueryParam'
+export default function myTemplate({ myQueryParam }: NextApiOgImageQuery<QueryParams>) {
   return `<h1>${myQueryParam}</h1>`
 }
 ```
@@ -82,7 +95,7 @@ const nextApiOgImageConfig = {
     inspectHtml: true,
   },
 }
-```
+````
 
 ## Examples
 
@@ -112,7 +125,6 @@ All contributions are welcome.
 [content-type]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type
 [cache-control]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
 [basic-typescript]: https://github.com/neg4n/next-api-og-image/tree/main/example/pages/api/basic-typescript.ts
-[basic-tailwind]: https://github.com/neg4n/next-api-og-image/tree/main/example/pages/api/basic-tailwind.js 
+[basic-tailwind]: https://github.com/neg4n/next-api-og-image/tree/main/example/pages/api/basic-tailwind.js
 [basic]: https://github.com/neg4n/next-api-og-image/tree/main/example/pages/api/basic.js
 [basic-fonts-local]: https://github.com/neg4n/next-api-og-image/tree/main/example/pages/api/basic-custom-fonts-local.js
-
