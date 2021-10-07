@@ -4,8 +4,10 @@ import twemoji from 'twemoji'
 import core from 'puppeteer-core'
 import chrome from 'chrome-aws-lambda'
 
+export type NextApiOgImageQuery<QueryType extends string> = Record<QueryType, string | Array<string>>
+
 export type NextApiOgImageConfig<QueryType extends string> = {
-  html: (...queryParams: Record<QueryType, string | string[]>[]) => string | Promise<string>
+  html: (...queryParams: Array<NextApiOgImageQuery<QueryType>>) => string | Promise<string>
   contentType?: string
   cacheControl?: string
   dev?: Partial<{
@@ -53,7 +55,7 @@ export function withOGImage<QueryType extends string>(options: NextApiOgImageCon
     const { query } = request
     const browserEnvironment = await createBrowserEnvironment()
 
-    const html = await htmlTemplate({ ...query } as Record<QueryType, string | string[]>)
+    const html = await htmlTemplate({ ...query } as NextApiOgImageQuery<QueryType>)
 
     response.setHeader(
       'Content-Type',
@@ -81,7 +83,7 @@ function emojify(html: string) {
   return `<style>${emojiStyle}</style>${emojified}`
 }
 
-function pipe(...functions: Function[]): () => Promise<BrowserEnvironment> {
+function pipe(...functions: Array<Function>): () => Promise<BrowserEnvironment> {
   return async function () {
     return await functions.reduce(
       async (acc, fn) => await fn(await acc),
