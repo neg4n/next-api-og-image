@@ -133,9 +133,11 @@ You can find more examples here:
 - JavaScript
   - [Basic usage with JavaScript][basic]
   - [Basic usage with TailwindCSS][basic-tailwind]
+  - [Basic usage with React template provided][basic-react]
   - [Basic usage with loading custom local fonts][basic-fonts-local]
 - TypeScript
   - [Basic usage with TypeScript][basic-typescript]
+  - [Advanced usage with TypeScript, React template and custom local fonts][advanced-typescript-react]
 
 _the `example/` directory contains simple [Next.js][next-homepage] application implementing `next-api-og-image` . To fully explore examples implemented in it by yourself - simply do `npm link && cd examples && npm i && npm run dev` then navigate to http://localhost:3000/_
 
@@ -157,5 +159,7 @@ All contributions are welcome.
 [cache-control]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
 [basic-typescript]: https://github.com/neg4n/next-api-og-image/tree/main/example/pages/api/basic-typescript.ts
 [basic-tailwind]: https://github.com/neg4n/next-api-og-image/tree/main/example/pages/api/basic-tailwind.js
+[basic-react]: https://github.com/neg4n/next-api-og-image/tree/main/example/pages/api/basic-react.js
 [basic]: https://github.com/neg4n/next-api-og-image/tree/main/example/pages/api/basic.js
 [basic-fonts-local]: https://github.com/neg4n/next-api-og-image/tree/main/example/pages/api/basic-custom-fonts-local.js
+[advanced-typescript-react]: https://github.com/neg4n/next-api-og-image/tree/main/example/pages/api/advanced-typescript-react.tsx
