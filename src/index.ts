@@ -1,13 +1,25 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import type { Page } from 'puppeteer-core'
+import type { ReactElement } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
 import twemoji from 'twemoji'
 import core from 'puppeteer-core'
 import chrome from 'chrome-aws-lambda'
 
 export type NextApiOgImageQuery<QueryType extends string> = Record<QueryType, string | Array<string>>
 
-export type NextApiOgImageConfig<QueryType extends string> = {
+type NextApiOgImageHtmlTemplate<QueryType extends string> = {
   html: (...queryParams: Array<NextApiOgImageQuery<QueryType>>) => string | Promise<string>
+  react?: never
+}
+
+type NextApiOgImageReactTemplate<QueryType extends string> = {
+  react: (...queryParams: Array<NextApiOgImageQuery<QueryType>>) => ReactElement | Promise<ReactElement>
+  html?: never
+}
+
+export type NextApiOgImageConfig<QueryType extends string> = {
+  template: NextApiOgImageHtmlTemplate<QueryType> | NextApiOgImageReactTemplate<QueryType>
   contentType?: string
   cacheControl?: string
   dev?: Partial<{
@@ -23,7 +35,7 @@ type BrowserEnvironment = {
 }
 
 export function withOGImage<QueryType extends string>(options: NextApiOgImageConfig<QueryType>) {
-  const defaultOptions: Omit<NextApiOgImageConfig<QueryType>, 'html'> = {
+  const defaultOptions: Omit<NextApiOgImageConfig<QueryType>, 'template'> = {
     contentType: 'image/png',
     cacheControl: 'max-age 3600, must-revalidate',
     dev: {
@@ -34,14 +46,18 @@ export function withOGImage<QueryType extends string>(options: NextApiOgImageCon
   options = { ...defaultOptions, ...options }
 
   const {
-    html: htmlTemplate,
+    template: { html: htmlTemplate, react: reactTemplate },
     cacheControl,
     contentType,
     dev: { inspectHtml },
   } = options
 
-  if (!htmlTemplate) {
-    throw new Error('Missing html template')
+  if (htmlTemplate && reactTemplate) {
+    throw new Error('Ambigious template provided. You must provide either `html` or `react` template.')
+  }
+
+  if (!htmlTemplate && !reactTemplate) {
+    throw new Error('No template was provided.')
   }
 
   const createBrowserEnvironment = pipe(
@@ -55,7 +71,10 @@ export function withOGImage<QueryType extends string>(options: NextApiOgImageCon
     const { query } = request
     const browserEnvironment = await createBrowserEnvironment()
 
-    const html = await htmlTemplate({ ...query } as NextApiOgImageQuery<QueryType>)
+    const html =
+      htmlTemplate && !reactTemplate
+        ? await htmlTemplate({ ...query } as NextApiOgImageQuery<QueryType>)
+        : renderToStaticMarkup(await reactTemplate({ ...query } as NextApiOgImageQuery<QueryType>))
 
     response.setHeader(
       'Content-Type',

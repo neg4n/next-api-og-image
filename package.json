@@ -53,6 +53,8 @@
   },
   "devDependencies": {
     "@types/node": "^16.10.2",
+    "@types/react": "^17.0.29",
+    "@types/react-dom": "^17.0.9",
     "@types/twemoji": "^12.1.2",
     "microbundle": "^0.13.3",
     "prettier": "^2.4.1",
