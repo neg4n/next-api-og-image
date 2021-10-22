@@ -1,55 +1,75 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
+import type { Except, RequireExactlyOne } from 'type-fest'
 import type { Page } from 'puppeteer-core'
 import type { ReactElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import deepMerge from 'deepmerge'
 import twemoji from 'twemoji'
 import core from 'puppeteer-core'
 import chrome from 'chrome-aws-lambda'
 
-export type NextApiOgImageQuery<QueryType extends string> = Record<QueryType, string | Array<string>>
+const STRATEGY_OPTIONS = ['body', 'query'] as const
+type StrategyOption = typeof STRATEGY_OPTIONS[number]
 
-type NextApiOgImageHtmlTemplate<QueryType extends string> = {
-  html: (...queryParams: Array<NextApiOgImageQuery<QueryType>>) => string | Promise<string>
-  react?: never
-}
+const ENV_MODES = ['development', 'staging', 'production', 'testing'] as const
+type EnvMode = typeof ENV_MODES[number]
 
-type NextApiOgImageReactTemplate<QueryType extends string> = {
-  react: (...queryParams: Array<NextApiOgImageQuery<QueryType>>) => ReactElement | Promise<ReactElement>
-  html?: never
-}
+type StrategyAwareParams<
+  T extends StrategyOption = 'query',
+  StrategyDetails extends string | object = string,
+> = T extends 'body'
+  ? StrategyDetails
+  : Record<StrategyDetails extends string ? StrategyDetails : string, NonNullable<string>>
 
-export type NextApiOgImageConfig<QueryType extends string> = {
-  template: NextApiOgImageHtmlTemplate<QueryType> | NextApiOgImageReactTemplate<QueryType>
+export type NextApiOgImageConfig<
+  Strategy extends StrategyOption,
+  StrategyDetails extends string | object = string,
+> = {
+  template: RequireExactlyOne<
+    Partial<{
+      html: (params: StrategyAwareParams<Strategy, StrategyDetails>) => string | Promise<string>
+      react: (params: StrategyAwareParams<Strategy, StrategyDetails>) => ReactElement | Promise<ReactElement>
+    }>,
+    'html' | 'react'
+  >
+  strategy?: StrategyOption
   contentType?: string
   cacheControl?: string
   dev?: Partial<{
     inspectHtml: boolean
+    errorsInResponse: boolean
   }>
 }
 
 type BrowserEnvironment = {
-  mode: 'development' | 'production'
+  envMode: EnvMode
   executable: string
   page: Page
   createImage: (html: string) => Promise<Buffer> | Promise<string>
 }
 
-export function withOGImage<QueryType extends string>(options: NextApiOgImageConfig<QueryType>) {
-  const defaultOptions: Omit<NextApiOgImageConfig<QueryType>, 'template'> = {
+export function withOGImage<
+  Strategy extends StrategyOption = 'query',
+  StrategyDetails extends string | object = string,
+>(options: NextApiOgImageConfig<Strategy, StrategyDetails>) {
+  const defaultOptions: Except<NextApiOgImageConfig<Strategy, StrategyDetails>, 'template'> = {
     contentType: 'image/png',
+    strategy: 'query',
     cacheControl: 'max-age 3600, must-revalidate',
     dev: {
       inspectHtml: true,
+      errorsInResponse: true,
     },
   }
 
-  options = { ...defaultOptions, ...options }
+  options = deepMerge(defaultOptions, options) as NextApiOgImageConfig<Strategy, StrategyDetails>
 
   const {
     template: { html: htmlTemplate, react: reactTemplate },
     cacheControl,
+    strategy,
     contentType,
-    dev: { inspectHtml },
+    dev: { inspectHtml, errorsInResponse },
   } = options
 
   if (htmlTemplate && reactTemplate) {
@@ -60,31 +80,95 @@ export function withOGImage<QueryType extends string>(options: NextApiOgImageCon
     throw new Error('No template was provided.')
   }
 
+  const envMode = process.env.NODE_ENV as EnvMode
+
   const createBrowserEnvironment = pipe(
-    getMode,
+    setMode(envMode),
     getChromiumExecutable,
     prepareWebPage,
     createImageFactory(inspectHtml),
   )
 
   return async function (request: NextApiRequest, response: NextApiResponse) {
-    const { query } = request
+    checkStrategy(strategy, !isProductionLikeMode(envMode) ? errorsInResponse : false, request, response)
+
+    const params = stringifyObjectProps(strategy === 'query' ? request.query : request.body)
     const browserEnvironment = await createBrowserEnvironment()
 
     const html =
       htmlTemplate && !reactTemplate
-        ? await htmlTemplate({ ...query } as NextApiOgImageQuery<QueryType>)
-        : renderToStaticMarkup(await reactTemplate({ ...query } as NextApiOgImageQuery<QueryType>))
+        ? await htmlTemplate({ ...params } as StrategyAwareParams<Strategy, StrategyDetails>)
+        : renderToStaticMarkup(
+            await reactTemplate({ ...params } as StrategyAwareParams<Strategy, StrategyDetails>),
+          )
 
     response.setHeader(
       'Content-Type',
-      browserEnvironment.mode === 'development' && inspectHtml ? 'text/html' : contentType,
+      !isProductionLikeMode(envMode) && inspectHtml ? 'text/html' : contentType,
     )
     response.setHeader('Cache-Control', cacheControl)
 
     response.write(await browserEnvironment.createImage(emojify(html)))
     response.end()
   }
+}
+
+function isProductionLikeMode(envMode: EnvMode) {
+  return envMode === 'production' || envMode === 'staging'
+}
+
+function checkStrategy(
+  strategy: StrategyOption,
+  errorsInResponse: boolean,
+  request: NextApiRequest,
+  response: NextApiResponse,
+) {
+  const checks: Record<StrategyOption, () => void> = {
+    body: () => {
+      const {
+        method,
+        headers: { 'content-type': contentType },
+      } = request
+      if (method !== 'POST' && contentType !== 'application/json') {
+        const message = `Strategy is set to \`body\` so parameters must be passed by POST request and JSON payload. Current method: ${method} and current content type: ${contentType}`
+
+        if (errorsInResponse) {
+          response.json({ message })
+        }
+
+        throw new Error(message)
+      }
+    },
+    query: () => {
+      const { method, query } = request
+      if (method !== 'GET') {
+        const message = `Strategy is set to \`query\` so parameters must be passed by GET request and query params. Current method: ${method}`
+
+        response.json({ message })
+        throw new Error(message)
+      }
+
+      if (!query || (query && Object.keys(query).length === 0)) {
+        const message = `Could not find query parameters in request.`
+
+        response.json({ message })
+        throw new Error(message)
+      }
+    },
+  }
+  const currentCheck = checks[strategy]
+
+  if (!currentCheck) {
+    throw new Error(`Unknown strategy provided. Possible values: ${STRATEGY_OPTIONS}`)
+  }
+
+  currentCheck()
+}
+
+function stringifyObjectProps(object: object) {
+  return JSON.parse(
+    JSON.stringify(object, (key, value) => (value && typeof value === 'object' ? value : `${value}`)),
+  )
 }
 
 function emojify(html: string) {
@@ -111,9 +195,10 @@ function pipe(...functions: Array<Function>): () => Promise<BrowserEnvironment> 
   }
 }
 
-function getMode(browserEnvironment: BrowserEnvironment) {
-  const mode = process.env.NODE_ENV || 'development'
-  return { ...browserEnvironment, mode }
+function setMode(envMode: EnvMode) {
+  return (browserEnvironment: BrowserEnvironment) => {
+    return { ...browserEnvironment, mode: envMode }
+  }
 }
 
 function getChromiumExecutable(browserEnvironment: BrowserEnvironment) {
@@ -128,20 +213,19 @@ function getChromiumExecutable(browserEnvironment: BrowserEnvironment) {
 }
 
 async function prepareWebPage(browserEnvironment: BrowserEnvironment) {
-  const { page, mode, executable } = browserEnvironment
+  const { page, envMode, executable } = browserEnvironment
 
   if (page) {
     return { ...browserEnvironment, page }
   }
 
-  const chromiumOptions =
-    mode === 'development'
-      ? { args: [], executablePath: executable, headless: true }
-      : {
-          args: chrome.args,
-          executablePath: await chrome.executablePath,
-          headless: chrome.headless,
-        }
+  const chromiumOptions = !isProductionLikeMode(envMode)
+    ? { args: [], executablePath: executable, headless: true }
+    : {
+        args: chrome.args,
+        executablePath: await chrome.executablePath,
+        headless: chrome.headless,
+      }
 
   const browser = await core.launch(chromiumOptions)
   const newPage = await browser.newPage()
@@ -152,14 +236,14 @@ async function prepareWebPage(browserEnvironment: BrowserEnvironment) {
 
 function createImageFactory(inspectHtml: boolean) {
   return function (browserEnvironment: BrowserEnvironment) {
-    const { page, mode } = browserEnvironment
+    const { page, envMode } = browserEnvironment
 
     return {
       ...browserEnvironment,
       createImage: async function (html: string) {
         await page.setContent(html)
         const file =
-          mode === 'development' && inspectHtml
+          !isProductionLikeMode(envMode) && inspectHtml
             ? await page.content()
             : await page.screenshot({ type: 'png', encoding: 'binary' })
         return file

@@ -60,10 +60,12 @@
     "prettier": "^2.4.1",
     "rimraf": "^3.0.2",
     "ts-node": "^10.2.1",
+    "type-fest": "^2.5.1",
     "typescript": "^4.4.3"
   },
   "dependencies": {
     "chrome-aws-lambda": "^10.1.0",
+    "deepmerge": "^4.2.2",
     "patch-package": "^6.4.7",
     "puppeteer-core": "^10.4.0",
     "twemoji": "^13.1.0"
