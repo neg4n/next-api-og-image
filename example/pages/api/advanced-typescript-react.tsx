@@ -23,7 +23,7 @@ const style = `
   }
 `
 
-export default withOGImage<'testQueryParam'>({
+export default withOGImage<'query', 'testQueryParam'>({
   template: {
     react: async ({ testQueryParam }) => {
       const value = await someLongRunningValueGetter()

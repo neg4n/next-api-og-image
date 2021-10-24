@@ -12,6 +12,7 @@ _you can treat this project as simpler and configurable version of mentioned ear
 - [x] 🐄 Super easy usage
 - [x] 🌐 Suitable for [serverless][vercel-serverless] environment
 - [x] :bowtie: Elegant way for defining templates both in [React][react] and [HTML][html]
+- [x] 📬 Multiple strategies - pass values by GET and query params or POST and JSON body
 - [x] 🥷 TypeScript compatible
 
 ## Installing
@@ -55,10 +56,10 @@ The `html` and `react` properties are template providers functions. Each functio
 This allows you to create fully customized HTML templates by simply accessing these parameters. The preferred way to do that is [object destructuring][object-destructuring].
 
 > **⚠️ NOTE**  
-> `html` and `react` template provider functions   
+> `html` and `react` template provider functions  
 > **can be defined as asynchronous**
 
-#### Example
+#### Examples
 
 ##### HTML template
 
@@ -78,9 +79,47 @@ export default withOGImage({ template: { react: ({ myQueryParam }) => <h1>{myQue
 
 _if you send GET HTTP request to [api route][next-api-routes] with code presented above e.g. `localhost:3000/api/foo?myQueryParam=hello` - it will render heading with content equal to 'hello'_
 
+### Strategies
+
+`next-api-og-image` allows you to choose strategy for providing values to the template. The available strategies are:
+
+1. `query` _(default)_ - values are passed by query params and GET HTTP request.  
+   **These values ⛔️ cannot be nested nor accessed by nested destructuring in template provider function**.
+
+2. `body` - values are passed by POST HTTP request and JSON body.  
+   These values ✅ can be nested and accessed by nested destructuring in template provider function.
+
+The strategies are determined by `strategy` prop in the configuration. Default strategy is `query`.
+
+> **⚠️ NOTE**  
+> Regardless of the strategy - all properties (every single one)  
+> **are implicitly casted to string, even very long JSON's nested values**
+
+#### Types in template provider function
+
+If you're using TypeScript, you probably want to have these things
+typed. Well... its actually super easy! Simply add generic types to `withOGImage` function.
+
+1. typed `query` strategy with query params `?foo=hello&bar=friend` will look like this:
+   ```js
+   export default withOGImage<'query', 'foo' | 'bar'>(/* ... */)
+   ```
+2. typed `body` strategy with JSON payload `{ "foo": "hello", "imNested": { "bar": "friend" }}` will look like this:
+   ```js
+   export default withOGImage<'body', { foo: string, imNested: { bar: string } }>({ strategy: 'body', /* ... */ })
+   ```
+
+#### Errors
+
+When strategy is set to `query` and you're sending POST HTTP request with JSON body or when strategy is set to `body` and you're sending GET HTTP request with query params - `next-api-og-image` will:
+
+1. Will throw an runtime error
+2. Set appropiate response message to the client
+   You can disable this behaviour by setting `dev: { throwOnError: false }` in the configuration
+
 ### Splitting files
 
-Keeping all the templates inline within [Next.js API route][next-api-routes] should not be problematic, but if you prefer keeping things in separate files you can follow the common pattern of creating files like `my-template.html.js` or `my-template.js` when you define template as react *(naming convention is fully up to you)* with code e.g.
+Keeping all the templates inline within [Next.js API route][next-api-routes] should not be problematic, but if you prefer keeping things in separate files you can follow the common pattern of creating files like `my-template.html.js` or `my-template.js` when you define template as react _(naming convention is fully up to you)_ with code e.g.
 
 ```js
 export default function myTemplate({ myQueryParam }) {
@@ -94,7 +133,7 @@ export default function myTemplate({ myQueryParam }) {
 import type { NextApiOgImageQuery } from 'next-api-og-image'
 
 type QueryParams = 'myQueryParam'
-export default function myTemplate({ myQueryParam }: NextApiOgImageQuery<QueryParams>) {
+export default function myTemplate({ myQueryParam }: Record<QueryParams, string>) {
   return `<h1>${myQueryParam}</h1>`
 }
 ```
@@ -113,6 +152,8 @@ Example configuration with **default values** _(apart from template.html or temp
 
 ```js
 const nextApiOgImageConfig = {
+  // Values passing strategy
+  strategy: 'query',
   // 'Content-Type' HTTP header
   contentType: 'image/png',
   // 'Cache-Control' HTTP header
@@ -122,6 +163,9 @@ const nextApiOgImageConfig = {
     // Whether to replace binary data (image/screenshot) with HTML
     // that can be debugged in Developer Tools
     inspectHtml: true,
+    // Whether to set error message in response
+    // if there are strategy related errors
+    errorsInResponse: true,
   },
 }
 ```
@@ -137,6 +181,8 @@ You can find more examples here:
   - [Basic usage with loading custom local fonts][basic-fonts-local]
 - TypeScript
   - [Basic usage with TypeScript][basic-typescript]
+  - [Basic usage with TypeScript and React using query strategy][basic-typescript-react-query]
+  - [Basic usage with TypeScript and React using body strategy][basic-typescript-react-json] (JSON)
   - [Advanced usage with TypeScript, React template and custom local fonts][advanced-typescript-react]
 
 _the `example/` directory contains simple [Next.js][next-homepage] application implementing `next-api-og-image` . To fully explore examples implemented in it by yourself - simply do `npm link && cd examples && npm i && npm run dev` then navigate to http://localhost:3000/_
@@ -163,3 +209,5 @@ All contributions are welcome.
 [basic]: https://github.com/neg4n/next-api-og-image/tree/main/example/pages/api/basic.js
 [basic-fonts-local]: https://github.com/neg4n/next-api-og-image/tree/main/example/pages/api/basic-custom-fonts-local.js
 [advanced-typescript-react]: https://github.com/neg4n/next-api-og-image/tree/main/example/pages/api/advanced-typescript-react.tsx
+[basic-typescript-react-query]: https://github.com/neg4n/next-api-og-image/tree/main/example/pages/api/basic-typescript-react-query.tsx
+[basic-typescript-react-json]: https://github.com/neg4n/next-api-og-image/tree/main/example/pages/api/basic-typescript-react-json.tsx
