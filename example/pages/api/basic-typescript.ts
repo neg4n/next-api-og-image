@@ -1,6 +1,6 @@
 import { withOGImage } from 'next-api-og-image'
 
-export default withOGImage<'testQueryParam'>({
+export default withOGImage<'query', 'testQueryParam'>({
   template: {
     html: async ({ testQueryParam }) => {
       return `
