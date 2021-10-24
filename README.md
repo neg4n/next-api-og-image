@@ -181,6 +181,8 @@ You can find more examples here:
   - [Basic usage with loading custom local fonts][basic-fonts-local]
 - TypeScript
   - [Basic usage with TypeScript][basic-typescript]
+  - [Basic usage with TypeScript and React using query strategy][basic-typescript-react-query]
+  - [Basic usage with TypeScript and React using body strategy][basic-typescript-react-json] (JSON)
   - [Advanced usage with TypeScript, React template and custom local fonts][advanced-typescript-react]
 
 _the `example/` directory contains simple [Next.js][next-homepage] application implementing `next-api-og-image` . To fully explore examples implemented in it by yourself - simply do `npm link && cd examples && npm i && npm run dev` then navigate to http://localhost:3000/_
@@ -207,3 +209,5 @@ All contributions are welcome.
 [basic]: https://github.com/neg4n/next-api-og-image/tree/main/example/pages/api/basic.js
 [basic-fonts-local]: https://github.com/neg4n/next-api-og-image/tree/main/example/pages/api/basic-custom-fonts-local.js
 [advanced-typescript-react]: https://github.com/neg4n/next-api-og-image/tree/main/example/pages/api/advanced-typescript-react.tsx
+[basic-typescript-react-query]: https://github.com/neg4n/next-api-og-image/tree/main/example/pages/api/basic-typescript-react-query.tsx
+[basic-typescript-react-json]: https://github.com/neg4n/next-api-og-image/tree/main/example/pages/api/basic-typescript-react-json.tsx
