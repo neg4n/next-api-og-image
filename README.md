@@ -115,7 +115,7 @@ When strategy is set to `query` and you're sending POST HTTP request with JSON b
 
 1. Will throw an runtime error
 2. Set appropiate response message to the client
-   You can disable this behaviour by setting `dev: { throwOnError: false }` in the configuration
+   You can disable this behaviour by setting `dev: { errorsInResponse: false }` in the configuration
 
 ### Splitting files
 
