@@ -83,7 +83,6 @@ export function withOGImage<
   const envMode = process.env.NODE_ENV as EnvMode
 
   const createBrowserEnvironment = pipe(
-    setMode(envMode),
     getChromiumExecutable,
     prepareWebPage,
     createImageFactory(inspectHtml),
@@ -129,6 +128,7 @@ function checkStrategy(
         method,
         headers: { 'content-type': contentType },
       } = request
+
       if (method !== 'POST' && contentType !== 'application/json') {
         const message = `Strategy is set to \`body\` so parameters must be passed by POST request and JSON payload. Current method: ${method} and current content type: ${contentType}`
 
@@ -140,18 +140,15 @@ function checkStrategy(
       }
     },
     query: () => {
-      const { method, query } = request
+      const { method } = request
+
       if (method !== 'GET') {
         const message = `Strategy is set to \`query\` so parameters must be passed by GET request and query params. Current method: ${method}`
 
-        response.json({ message })
-        throw new Error(message)
-      }
+        if (errorsInResponse) {
+          response.json({ message })
+        }
 
-      if (!query || (query && Object.keys(query).length === 0)) {
-        const message = `Could not find query parameters in request.`
-
-        response.json({ message })
         throw new Error(message)
       }
     },
@@ -190,14 +187,8 @@ function pipe(...functions: Array<Function>): () => Promise<BrowserEnvironment> 
   return async function () {
     return await functions.reduce(
       async (acc, fn) => await fn(await acc),
-      Promise.resolve({} as BrowserEnvironment),
+      Promise.resolve({ envMode: process.env.NODE_ENV as EnvMode } as BrowserEnvironment),
     )
-  }
-}
-
-function setMode(envMode: EnvMode) {
-  return (browserEnvironment: BrowserEnvironment) => {
-    return { ...browserEnvironment, mode: envMode }
   }
 }
 
