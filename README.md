@@ -39,7 +39,7 @@ You can find more examples here:
   - [Basic usage with TypeScript and React using body strategy][basic-typescript-react-json] (JSON)
   - [Advanced usage with TypeScript, React template and custom local fonts][advanced-typescript-react]
 
-_the `example/` directory contains simple [Next.js][next-homepage] application implementing `next-api-og-image` . To fully explore examples implemented in it by yourself - simply do `npm link && cd examples && npm i && npm run dev` then navigate to http://localhost:3000/_
+_the `example/` directory contains simple [Next.js][next-homepage] application implementing `next-api-og-image` . To fully explore examples implemented in it by yourself - simply do `npm link && cd example && npm i && npm run dev` then navigate to http://localhost:3000/_
 
 ## Basic usage and explaination
 
