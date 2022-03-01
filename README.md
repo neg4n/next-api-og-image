@@ -174,6 +174,10 @@ const nextApiOgImageConfig = {
   strategy: 'query',
   // 'Content-Type' HTTP header
   contentType: 'image/png',
+  // Width of the image in pixels (default 1200)
+  width: 2048,
+  // Height of the image in pixels (default 630)
+  height: 1170,
   // 'Cache-Control' HTTP header
   cacheControl: 'max-age 3600, must-revalidate',
   // NOTE: Options within 'dev' object works only when process.env.NODE_ENV === 'development'
