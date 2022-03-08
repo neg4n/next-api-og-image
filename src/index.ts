@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import type { Except, RequireExactlyOne } from 'type-fest'
-import type { Page } from 'puppeteer-core'
+import type { Page, Viewport } from 'puppeteer-core'
 import type { ReactElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import deepMerge from 'deepmerge'
@@ -35,6 +35,8 @@ export type NextApiOgImageConfig<
   strategy?: StrategyOption
   contentType?: string
   cacheControl?: string
+  width?: number
+  height?: number
   dev?: Partial<{
     inspectHtml: boolean
     errorsInResponse: boolean
@@ -56,6 +58,8 @@ export function withOGImage<
     contentType: 'image/png',
     strategy: 'query',
     cacheControl: 'max-age 3600, must-revalidate',
+    width: 1200,
+    height: 630,
     dev: {
       inspectHtml: true,
       errorsInResponse: true,
@@ -69,6 +73,8 @@ export function withOGImage<
     cacheControl,
     strategy,
     contentType,
+    width,
+    height,
     dev: { inspectHtml, errorsInResponse },
   } = options
 
@@ -84,7 +90,7 @@ export function withOGImage<
 
   const createBrowserEnvironment = pipe(
     getChromiumExecutable,
-    prepareWebPage,
+    prepareWebPageFactory({ width, height }),
     createImageFactory(inspectHtml),
   )
 
@@ -203,26 +209,28 @@ function getChromiumExecutable(browserEnvironment: BrowserEnvironment) {
   return { ...browserEnvironment, executable }
 }
 
-async function prepareWebPage(browserEnvironment: BrowserEnvironment) {
-  const { page, envMode, executable } = browserEnvironment
+function prepareWebPageFactory(viewPort: Viewport) {
+  return async function (browserEnvironment: BrowserEnvironment) {
+    const { page, envMode, executable } = browserEnvironment
 
-  if (page) {
-    return { ...browserEnvironment, page }
+    if (page) {
+      return { ...browserEnvironment, page }
+    }
+
+    const chromiumOptions = !isProductionLikeMode(envMode)
+      ? { args: [], executablePath: executable, headless: true }
+      : {
+          args: chrome.args,
+          executablePath: await chrome.executablePath,
+          headless: chrome.headless,
+        }
+
+    const browser = await core.launch(chromiumOptions)
+    const newPage = await browser.newPage()
+    await newPage.setViewport(viewPort)
+
+    return { ...browserEnvironment, page: newPage }
   }
-
-  const chromiumOptions = !isProductionLikeMode(envMode)
-    ? { args: [], executablePath: executable, headless: true }
-    : {
-        args: chrome.args,
-        executablePath: await chrome.executablePath,
-        headless: chrome.headless,
-      }
-
-  const browser = await core.launch(chromiumOptions)
-  const newPage = await browser.newPage()
-  await newPage.setViewport({ width: 1200, height: 630 })
-
-  return { ...browserEnvironment, page: newPage }
 }
 
 function createImageFactory(inspectHtml: boolean) {
