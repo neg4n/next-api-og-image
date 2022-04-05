@@ -14,6 +14,8 @@ type StrategyOption = typeof STRATEGY_OPTIONS[number]
 const ENV_MODES = ['development', 'staging', 'production', 'testing'] as const
 type EnvMode = typeof ENV_MODES[number]
 
+type ImageType = 'png' | 'jpeg' | 'webp'
+
 type StrategyAwareParams<
   T extends StrategyOption = 'query',
   StrategyDetails extends string | object = string,
@@ -37,6 +39,8 @@ export type NextApiOgImageConfig<
   cacheControl?: string
   width?: number
   height?: number
+  type?: ImageType
+  quality?: number
   dev?: Partial<{
     inspectHtml: boolean
     errorsInResponse: boolean
@@ -55,11 +59,13 @@ export function withOGImage<
   StrategyDetails extends string | object = string,
 >(options: NextApiOgImageConfig<Strategy, StrategyDetails>) {
   const defaultOptions: Except<NextApiOgImageConfig<Strategy, StrategyDetails>, 'template'> = {
-    contentType: 'image/png',
+    contentType: options.type ? `image/${options.type}` : 'image/png',
     strategy: 'query',
     cacheControl: 'max-age 3600, must-revalidate',
     width: 1200,
     height: 630,
+    type: 'png',
+    quality: 90,
     dev: {
       inspectHtml: true,
       errorsInResponse: true,
@@ -75,6 +81,8 @@ export function withOGImage<
     contentType,
     width,
     height,
+    type,
+    quality,
     dev: { inspectHtml, errorsInResponse },
   } = options
 
@@ -91,7 +99,7 @@ export function withOGImage<
   const createBrowserEnvironment = pipe(
     getChromiumExecutable,
     prepareWebPageFactory({ width, height }),
-    createImageFactory(inspectHtml),
+    createImageFactory({ inspectHtml, type, quality }),
   )
 
   return async function (request: NextApiRequest, response: NextApiResponse) {
@@ -233,7 +241,15 @@ function prepareWebPageFactory(viewPort: Viewport) {
   }
 }
 
-function createImageFactory(inspectHtml: boolean) {
+function createImageFactory({
+  inspectHtml,
+  type,
+  quality,
+}: {
+  inspectHtml: boolean
+  type: ImageType
+  quality: number
+}) {
   return function (browserEnvironment: BrowserEnvironment) {
     const { page, envMode } = browserEnvironment
 
@@ -244,7 +260,7 @@ function createImageFactory(inspectHtml: boolean) {
         const file =
           !isProductionLikeMode(envMode) && inspectHtml
             ? await page.content()
-            : await page.screenshot({ type: 'png', encoding: 'binary' })
+            : await page.screenshot({ type, encoding: 'binary', quality })
         return file
       },
     }
