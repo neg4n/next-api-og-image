@@ -2,7 +2,8 @@ import { withOGImage } from 'next-api-og-image'
 import { interRegular } from '../../fonts/inter'
 
 export default withOGImage({
-  html: ({ myQueryParam }) => `
+  template: {
+    html: ({ myQueryParam }) => `
     <style>
       @font-face {
         font-family: 'Inter';
@@ -17,4 +18,15 @@ export default withOGImage({
     </style>
     <h1>${myQueryParam}</h1>
   `,
+  },
 })
+
+
+// =====================================
+// NOTE: This is for interactive example
+// please do not copy or use code below!
+// =====================================
+export const _interactiveExampleProps = {
+  type: 'query',
+  props: ['myQueryParam'],
+} 

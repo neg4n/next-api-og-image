@@ -11,6 +11,9 @@ type BodyParams = {
 
 export default withOGImage<'body', BodyParams>({
   strategy: 'body',
+  dev: {
+  inspectHtml: false,
+  },
   template: {
     react: ({
       test,
@@ -29,3 +32,13 @@ export default withOGImage<'body', BodyParams>({
     },
   },
 })
+
+
+// =====================================
+// NOTE: This is for interactive example
+// please do not copy or use code below!
+// =====================================
+export const _interactiveExampleProps = {
+  type: 'body',
+  props: ['test', 'another.foo.bar'],
+} 
