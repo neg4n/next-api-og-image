@@ -30,7 +30,7 @@ import { useOgImage, type RetrieveOgImageProps } from 'hooks'
 type HomePageProps = {
   fullRoutesMetadata: Array<{
     legibleRouteName: string
-    fileExtension: string
+    routeSourceUrl: string
     routeProps: { type: 'body' | 'query'; props: Array<string> }
   }>
 }
@@ -48,17 +48,14 @@ export default function HomePage({ fullRoutesMetadata }: HomePageProps) {
 
   const activeRoute = fullRoutesMetadata.find(({ legibleRouteName }) => legibleRouteName === selectedApiRoute)
   const apiRouteParams = activeRoute?.routeProps.props
+  const apiRouteSourceUrl = activeRoute?.routeSourceUrl
   const noPayload = apiRouteParams && apiRouteParams.length === 0
   //
   const isSubmitHorizontal = useBreakpointValue({ base: true, md: false })
   //
 
-  const onSubmit = async (values) => {
-  console.log({values})
-    console.log({activeRoute})
-    console.log({apiRouteParams})
+  const onSubmit = async (values: any) => {
     const outgoingStrategy = activeRoute.routeProps.type
-    console.log(outgoingStrategy)
     const ogImageData = await retrieve(outgoingStrategy === 'query' ? 'get-query' : 'post-json', values)
     setOgImageData(ogImageData)
   }
@@ -100,7 +97,14 @@ export default function HomePage({ fullRoutesMetadata }: HomePageProps) {
             onOptionSelect={handleApiRouteSelect}
           />
           {!noPayload ? (
-            <Stack mt={4} p={4} borderRadius="md" borderColor="gray.600" borderWidth="1px" borderStyle="solid">
+            <Stack
+              mt={4}
+              p={4}
+              borderRadius="md"
+              borderColor="gray.600"
+              borderWidth="1px"
+              borderStyle="solid"
+            >
               {apiRouteParams.map((queryParam) => (
                 <FormControl key={queryParam} isRequired>
                   <FormLabel>{queryParam}</FormLabel>
@@ -141,6 +145,7 @@ export default function HomePage({ fullRoutesMetadata }: HomePageProps) {
             ) : ogImageData && ogImageData.type === 'html' ? (
               <Stack
                 w="100%"
+                h="100%"
                 borderRadius="md"
                 borderColor="gray.600"
                 borderWidth="1px"
@@ -148,10 +153,8 @@ export default function HomePage({ fullRoutesMetadata }: HomePageProps) {
                 p={4}
                 flexDir="column"
               >
-                <Text>This open-graph is generated in preview mode.</Text>
-                <LinkBox>
-                  <Button><LinkOverlay href={`https://github.com/neg4n/next-api-og-image/example/pages/api/${selectedApiRoute}`}>Click to see the preview in other tab</LinkOverlay></Button>
-                </LinkBox>
+                <Text textAlign="center">Could not show the image.</Text>
+                <Text textAlign="center">This open-graph is generated in preview mode.</Text>
               </Stack>
             ) : null}
             {ogImageData ? (
@@ -196,12 +199,13 @@ export default function HomePage({ fullRoutesMetadata }: HomePageProps) {
                     )}
                   </Text>{' '}
                 </Text>
-                <Stack direction={{ base: 'column', md: 'row' }}>
-                  <Button w="100%">Open in other tab</Button>
+                <Stack direction={{ base: 'column', md: 'row' }} justifyContent="flex-end">
                   <Tooltip label="Click to see source code responsible for generating this open-graph image.">
-                    <Button w="100%" variant="outline" rightIcon={<Icon as={GoMarkGithub} w={5} h={5} />}>
-                      View on GitHub
-                    </Button>
+                    <LinkBox>
+                      <Button w="100%" variant="outline" mt={2} rightIcon={<Icon as={GoMarkGithub} w={5} h={5} />}>
+                        <LinkOverlay href={apiRouteSourceUrl}>View on GitHub</LinkOverlay>
+                      </Button>
+                    </LinkBox>
                   </Tooltip>
                 </Stack>
               </Stack>
@@ -225,7 +229,7 @@ export const getStaticProps: GetStaticProps = async () => {
 
   const fullRoutesMetadata = legibleRouteNames.map((legibleRouteName, index) => ({
     legibleRouteName,
-    fileExtension: routeExtensions[index], 
+    routeSourceUrl: `${process.env.GITHUB_MAIN_BRANCH_API_DIRECTORY}${legibleRouteName}.${routeExtensions[index]}`,
     routeProps: routeModules[index]._interactiveExampleProps ?? {},
   }))
 
