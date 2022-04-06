@@ -260,7 +260,7 @@ function createImageFactory({
         const file =
           !isProductionLikeMode(envMode) && inspectHtml
             ? await page.content()
-            : await page.screenshot({ type, encoding: 'binary', quality })
+            : await page.screenshot({ type, encoding: 'binary', ...(type === 'jpeg' ? { quality } : null) })
         return file
       },
     }
