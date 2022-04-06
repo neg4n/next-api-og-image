@@ -35,7 +35,6 @@ export type NextApiOgImageConfig<
     'html' | 'react'
   >
   strategy?: StrategyOption
-  contentType?: string
   cacheControl?: string
   width?: number
   height?: number
@@ -59,7 +58,6 @@ export function withOGImage<
   StrategyDetails extends string | object = string,
 >(options: NextApiOgImageConfig<Strategy, StrategyDetails>) {
   const defaultOptions: Except<NextApiOgImageConfig<Strategy, StrategyDetails>, 'template'> = {
-    contentType: options.type ? `image/${options.type}` : 'image/png',
     strategy: 'query',
     cacheControl: 'max-age 3600, must-revalidate',
     width: 1200,
@@ -78,10 +76,9 @@ export function withOGImage<
     template: { html: htmlTemplate, react: reactTemplate },
     cacheControl,
     strategy,
-    contentType,
+    type,
     width,
     height,
-    type,
     quality,
     dev: { inspectHtml, errorsInResponse },
   } = options
@@ -117,7 +114,7 @@ export function withOGImage<
 
     response.setHeader(
       'Content-Type',
-      !isProductionLikeMode(envMode) && inspectHtml ? 'text/html' : contentType,
+      !isProductionLikeMode(envMode) && inspectHtml ? 'text/html' : type ? `image/${type}` : 'image/png',
     )
     response.setHeader('Cache-Control', cacheControl)
 
