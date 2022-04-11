@@ -17,11 +17,20 @@ _you can treat this project as simpler and configurable version of mentioned ear
 
 ## Installing
 
+In your  [Next.js][next-homepage] project, execute:
+
 ```sh
-npm i next-api-og-image -S
+npm i next-api-og-image@3.0.0 chrome-aws-lambda
 # or
-yarn add next-api-og-image
+yarn add next-api-og-image@3.0.0 chrome-aws-lambda
 ```
+### Short note about the peer dependencies
+
+> ℹ️ If your serverless function does not fit in the allowed size frames on [Vercel][vercel] **(50MB)**, you may want to install older versions of `chrome-aws-lambda`
+
+In order to do so, replace `chrome-aws-lambda` _(while adding the dependencies)_ with `chrome-aws-lambda@2.1.1` **(43.3MB)** or `chrome-aws-lambda@1.6.3` **(34.9MB)** 
+
+Please, refer to https://github.com/neg4n/next-api-og-image/issues/23#issuecomment-1090319079 for more info 🙏
 
 ## Examples
 
