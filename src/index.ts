@@ -24,7 +24,7 @@ type StrategyAwareParams<
   : Record<StrategyDetails extends string ? StrategyDetails : string, NonNullable<string>>
 
 type NextApiRequestWithOgImage = {
-  ogImage: string | Buffer
+  image: string | Buffer
 }
 
 export type NextApiOgImageConfig<
@@ -43,8 +43,8 @@ export type NextApiOgImageConfig<
     width?: number
     height?: number
     type?: ImageType
-    hook?: (request: NextApiRequestWithOgImage) => void | Promise<void>,
     quality?: number
+    hook?: (request: NextApiRequestWithOgImage) => void | Promise<void>,
     dev?: Partial<{
       inspectHtml: boolean
       errorsInResponse: boolean
@@ -124,7 +124,7 @@ export function withOGImage<
     if (!!hook) {
       const extendedRequest: NextApiRequestWithOgImage = {
         ...request,
-        ogImage: image
+        image
       }
 
       await hook(extendedRequest)
