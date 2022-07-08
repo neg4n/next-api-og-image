@@ -1,4 +1,4 @@
-import type { NextApiRequest, NextApiResponse } from 'next'
+import type { NextApiHandler, NextApiRequest, NextApiResponse } from 'next'
 import type { Except, RequireExactlyOne } from 'type-fest'
 import type { Page, Viewport } from 'puppeteer-core'
 import type { ReactElement } from 'react'
@@ -19,32 +19,37 @@ type ImageType = 'png' | 'jpeg' | 'webp'
 type StrategyAwareParams<
   T extends StrategyOption = 'query',
   StrategyDetails extends string | object = string,
-> = T extends 'body'
+  > = T extends 'body'
   ? StrategyDetails
   : Record<StrategyDetails extends string ? StrategyDetails : string, NonNullable<string>>
+
+type NextApiRequestWithOgImage = {
+  ogImage: string | Buffer
+}
 
 export type NextApiOgImageConfig<
   Strategy extends StrategyOption,
   StrategyDetails extends string | object = string,
-> = {
-  template: RequireExactlyOne<
-    Partial<{
-      html: (params: StrategyAwareParams<Strategy, StrategyDetails>) => string | Promise<string>
-      react: (params: StrategyAwareParams<Strategy, StrategyDetails>) => ReactElement | Promise<ReactElement>
-    }>,
-    'html' | 'react'
-  >
-  strategy?: StrategyOption
-  cacheControl?: string
-  width?: number
-  height?: number
-  type?: ImageType
-  quality?: number
-  dev?: Partial<{
-    inspectHtml: boolean
-    errorsInResponse: boolean
-  }>
-}
+  > = {
+    template: RequireExactlyOne<
+      Partial<{
+        html: (params: StrategyAwareParams<Strategy, StrategyDetails>) => string | Promise<string>
+        react: (params: StrategyAwareParams<Strategy, StrategyDetails>) => ReactElement | Promise<ReactElement>
+      }>,
+      'html' | 'react'
+    >
+    strategy?: StrategyOption
+    cacheControl?: string
+    width?: number
+    height?: number
+    type?: ImageType
+    hook?: (request: NextApiRequestWithOgImage) => void | Promise<void>,
+    quality?: number
+    dev?: Partial<{
+      inspectHtml: boolean
+      errorsInResponse: boolean
+    }>
+  }
 
 type BrowserEnvironment = {
   envMode: EnvMode
@@ -56,7 +61,7 @@ type BrowserEnvironment = {
 export function withOGImage<
   Strategy extends StrategyOption = 'query',
   StrategyDetails extends string | object = string,
->(options: NextApiOgImageConfig<Strategy, StrategyDetails>) {
+  >(options: NextApiOgImageConfig<Strategy, StrategyDetails>) {
   const defaultOptions: Except<NextApiOgImageConfig<Strategy, StrategyDetails>, 'template'> = {
     strategy: 'query',
     cacheControl: 'max-age 3600, must-revalidate',
@@ -64,6 +69,7 @@ export function withOGImage<
     height: 630,
     type: 'png',
     quality: 90,
+    hook: null,
     dev: {
       inspectHtml: true,
       errorsInResponse: true,
@@ -78,6 +84,7 @@ export function withOGImage<
     strategy,
     type,
     width,
+    hook,
     height,
     quality,
     dev: { inspectHtml, errorsInResponse },
@@ -99,7 +106,7 @@ export function withOGImage<
     createImageFactory({ inspectHtml, type, quality }),
   )
 
-  return async function (request: NextApiRequest, response: NextApiResponse) {
+  return async function(request: NextApiRequest, response: NextApiResponse) {
     checkStrategy(strategy, !isProductionLikeMode(envMode) ? errorsInResponse : false, request, response)
 
     const params = stringifyObjectProps(strategy === 'query' ? request.query : request.body)
@@ -109,16 +116,26 @@ export function withOGImage<
       htmlTemplate && !reactTemplate
         ? await htmlTemplate({ ...params } as StrategyAwareParams<Strategy, StrategyDetails>)
         : renderToStaticMarkup(
-            await reactTemplate({ ...params } as StrategyAwareParams<Strategy, StrategyDetails>),
-          )
+          await reactTemplate({ ...params } as StrategyAwareParams<Strategy, StrategyDetails>),
+        )
+
+    const image = await browserEnvironment.createImage(emojify(html));
+
+    if (!!hook) {
+      const extendedRequest: NextApiRequestWithOgImage = {
+        ...request,
+        ogImage: image
+      }
+
+      await hook(extendedRequest)
+    }
 
     response.setHeader(
       'Content-Type',
       !isProductionLikeMode(envMode) && inspectHtml ? 'text/html' : type ? `image/${type}` : 'image/png',
     )
     response.setHeader('Cache-Control', cacheControl)
-
-    response.write(await browserEnvironment.createImage(emojify(html)))
+    response.write(image);
     response.end()
   }
 }
@@ -195,7 +212,7 @@ function emojify(html: string) {
 }
 
 function pipe(...functions: Array<Function>): () => Promise<BrowserEnvironment> {
-  return async function () {
+  return async function() {
     return await functions.reduce(
       async (acc, fn) => await fn(await acc),
       Promise.resolve({ envMode: process.env.NODE_ENV as EnvMode } as BrowserEnvironment),
@@ -208,14 +225,14 @@ function getChromiumExecutable(browserEnvironment: BrowserEnvironment) {
     process.platform === 'win32'
       ? 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'
       : process.platform === 'linux'
-      ? '/usr/bin/google-chrome'
-      : '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+        ? '/usr/bin/google-chrome'
+        : '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
 
   return { ...browserEnvironment, executable }
 }
 
 function prepareWebPageFactory(viewPort: Viewport) {
-  return async function (browserEnvironment: BrowserEnvironment) {
+  return async function(browserEnvironment: BrowserEnvironment) {
     const { page, envMode, executable } = browserEnvironment
 
     if (page) {
@@ -225,10 +242,10 @@ function prepareWebPageFactory(viewPort: Viewport) {
     const chromiumOptions = !isProductionLikeMode(envMode)
       ? { args: [], executablePath: executable, headless: true }
       : {
-          args: chrome.args,
-          executablePath: await chrome.executablePath,
-          headless: chrome.headless,
-        }
+        args: chrome.args,
+        executablePath: await chrome.executablePath,
+        headless: chrome.headless,
+      }
 
     const browser = await core.launch(chromiumOptions)
     const newPage = await browser.newPage()
@@ -247,12 +264,12 @@ function createImageFactory({
   type: ImageType
   quality: number
 }) {
-  return function (browserEnvironment: BrowserEnvironment) {
+  return function(browserEnvironment: BrowserEnvironment) {
     const { page, envMode } = browserEnvironment
 
     return {
       ...browserEnvironment,
-      createImage: async function (html: string) {
+      createImage: async function(html: string) {
         await page.setContent(html)
         const file =
           !isProductionLikeMode(envMode) && inspectHtml
