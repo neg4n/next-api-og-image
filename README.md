@@ -17,18 +17,19 @@ _you can treat this project as simpler and configurable version of mentioned ear
 
 ## Installing
 
-In your  [Next.js][next-homepage] project, execute:
+In your [Next.js][next-homepage] project, execute:
 
 ```sh
 npm i next-api-og-image chrome-aws-lambda
 # or
 yarn add next-api-og-image chrome-aws-lambda
 ```
+
 ### Short note about the peer dependencies
 
 > ℹ️ If your serverless function does not fit in the allowed size frames on [Vercel][vercel] **(50MB)**, you may want to install older versions of `chrome-aws-lambda`
 
-In order to do so, replace `chrome-aws-lambda` _(while adding the dependencies)_ with `chrome-aws-lambda@6.0.0` **(47.6 MB)** 
+In order to do so, replace `chrome-aws-lambda` _(while adding the dependencies)_ with `chrome-aws-lambda@6.0.0` **(47.6 MB)**
 
 Please, refer to https://github.com/neg4n/next-api-og-image/issues/23#issuecomment-1090319079 for more info 🙏
 
@@ -144,6 +145,30 @@ When strategy is set to `query` and you're sending POST HTTP request with JSON b
 2. Set appropiate response message to the client
    You can disable this behaviour by setting `dev: { errorsInResponse: false }` in the configuration
 
+### Hooking the post-generate process
+
+In some scenarios you may want to do something _(in other words - execute some logic)_ **after generation of the image**.
+This can be easily done by providing function to `hook` configuration property. The only parameter is `NextApiRequest` object with `image` attached to it.
+
+example (JavaScript):
+
+```js
+import { withOGImage } from 'next-api-og-image'
+
+export default withOGImage({
+  template: {
+    react: ({ myQueryParam }) => <div>🔥 {myQueryParam}</div>,
+  },
+  dev: {
+    inspectHtml: false,
+  },
+  hook: (innerRequest) => {
+    console.log(innerRequest.image)
+    // will print the generated image on the server as Buffer
+  },
+})
+```
+
 ### Splitting files
 
 Keeping all the templates inline within [Next.js API route][next-api-routes] should not be problematic, but if you prefer keeping things in separate files you can follow the common pattern of creating files like `my-template.html.js` or `my-template.js` when you define template as react _(naming convention is fully up to you)_ with code e.g.
@@ -187,10 +212,13 @@ const nextApiOgImageConfig = {
   quality: 90,
   // Width of the image in pixels
   width: 1200,
-  // Height of the image in pixels 
+  // Height of the image in pixels
   height: 630,
   // 'Cache-Control' HTTP header
   cacheControl: 'max-age 3600, must-revalidate',
+  // Hook function that allows to intercept inner NextApiRequest with `ogImage` prop attached.
+  // useful for e.g. saving image in the database after the generation.
+  hook: null,
   // NOTE: Options within 'dev' object works only when process.env.NODE_ENV === 'development'
   dev: {
     // Whether to replace binary data (image/screenshot) with HTML
