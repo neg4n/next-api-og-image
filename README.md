@@ -218,6 +218,8 @@ const nextApiOgImageConfig = {
   cacheControl: 'max-age 3600, must-revalidate',
   // Hook function that allows to intercept inner NextApiRequest with `ogImage` prop attached.
   // useful for e.g. saving image in the database after the generation.
+  // The hook function return is Map containing custom headers that will be set BEFORE sending
+  // response to the client.
   hook: null,
   // NOTE: Options within 'dev' object works only when process.env.NODE_ENV === 'development'
   dev: {
