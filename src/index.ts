@@ -1,8 +1,9 @@
-import type { NextApiHandler, NextApiRequest, NextApiResponse } from 'next'
+import type { NextApiRequest, NextApiResponse } from 'next'
 import type { Except, RequireExactlyOne } from 'type-fest'
 import type { Page, Viewport } from 'puppeteer-core'
 import type { ReactElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import os from 'os'
 import deepMerge from 'deepmerge'
 import twemoji from 'twemoji'
 import core from 'puppeteer-core'
@@ -226,12 +227,19 @@ function pipe(...functions: Array<Function>): () => Promise<BrowserEnvironment> 
 }
 
 function getChromiumExecutable(browserEnvironment: BrowserEnvironment) {
-  const executable =
-    process.platform === 'win32'
-      ? 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'
-      : process.platform === 'linux'
-      ? '/usr/bin/google-chrome'
-      : '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+  let executable = null
+
+  if (process.platform === 'win32') {
+    if (['arm64', 'ppc64', 'x64', 's390x'].includes(os.arch())) {
+      executable = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+    } else {
+      executable = 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'
+    }
+  } else if (process.platform === 'linux') {
+    executable = '/usr/bin/google-chrome'
+  } else {
+    executable = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+  }
 
   return { ...browserEnvironment, executable }
 }
