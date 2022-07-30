@@ -22,3 +22,13 @@ export default withOGImage<'query', keyof typeof QueryParams>({
     },
   },
 })
+
+
+// =====================================
+// NOTE: This is for interactive example
+// please do not copy or use code below!
+// =====================================
+export const _interactiveExampleProps = {
+  type: 'query',
+  props: ['test', 'bar', 'fizz'],
+} 
