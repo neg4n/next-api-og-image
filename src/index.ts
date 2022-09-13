@@ -3,6 +3,7 @@ import type { Except, RequireExactlyOne } from 'type-fest'
 import type { Page, Viewport } from 'puppeteer-core'
 import type { ReactElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import isLambda from 'is-lambda'
 import os from 'os'
 import deepMerge from 'deepmerge'
 import twemoji from 'twemoji'
@@ -129,6 +130,7 @@ export function withOGImage<
       }
 
       const headers = await hook(extendedRequest)
+
       if (!!headers) {
         for (const [extendedheaderName, extendedHeaderValue] of headers.entries()) {
           response.setHeader(extendedheaderName, extendedHeaderValue)
@@ -252,19 +254,29 @@ function prepareWebPageFactory(viewPort: Viewport) {
       return { ...browserEnvironment, page }
     }
 
-    const chromiumOptions = !isProductionLikeMode(envMode)
-      ? { args: [], executablePath: executable, headless: true }
-      : {
-          args: chrome.args,
-          executablePath: await chrome.executablePath,
-          headless: chrome.headless,
-        }
+    const chromiumOptions = await getChromiumOptions(envMode, executable)
 
     const browser = await core.launch(chromiumOptions)
     const newPage = await browser.newPage()
     await newPage.setViewport(viewPort)
 
     return { ...browserEnvironment, page: newPage }
+  }
+}
+
+async function getChromiumOptions(envMode: EnvMode, executable: string) {
+  if (!isProductionLikeMode(envMode)) {
+    return { args: [], executablePath: executable, headless: true }
+  } else {
+    if (isLambda) {
+      return {
+        args: chrome.args,
+        executablePath: await chrome.executablePath,
+        headless: chrome.headless,
+      }
+    } else {
+      return { args: [], executablePath: executable, headless: true }
+    }
   }
 }
 
