@@ -1,6 +1,6 @@
 {
   "name": "next-api-og-image",
-  "version": "4.2.1",
+  "version": "4.2.2",
   "description": "Easy way to generate open-graph images dynamically using Next.js API Routes.",
   "scripts": {
     "prepublishOnly": "npm run build",
@@ -39,10 +39,10 @@
     "lib"
   ],
   "peerDependencies": {
+    "chrome-aws-lambda": ">=1.6.3",
     "next": ">=9.0.0",
     "react": ">=16.0.0",
-    "react-dom": ">=16.0.0",
-    "chrome-aws-lambda": ">=1.6.3"
+    "react-dom": ">=16.0.0"
   },
   "prettier": {
     "printWidth": 110,
@@ -66,6 +66,7 @@
   },
   "dependencies": {
     "deepmerge": "^4.2.2",
+    "is-lambda": "^1.0.1",
     "puppeteer-core": "^10.4.0",
     "twemoji": "^13.1.0"
   }
