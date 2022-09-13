@@ -1,6 +1,6 @@
 {
   "name": "next-api-og-image",
-  "version": "4.2.1",
+  "version": "4.2.2",
   "description": "Easy way to generate open-graph images dynamically using Next.js API Routes.",
   "scripts": {
     "prepublishOnly": "npm run build",
