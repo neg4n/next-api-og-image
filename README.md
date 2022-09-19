@@ -221,6 +221,15 @@ const nextApiOgImageConfig = {
   // The hook function return is Map containing custom headers that will be set BEFORE sending
   // response to the client.
   hook: null,
+  // NOTE: Options within 'chrome' object only works when next-api-og-image is run in server (not serverless!!) environment.
+  chrome: {
+    // Custom command-line args passed to the browser start command
+    // by default, no arguments are provided.
+    args: null,
+    // Custom executable provided. Useful when you e.g. have to run Chromium instead of Google Chrome
+    // by default, executable is retrieved automatically (it looks for Google Chrome in the filesystem)
+    executable: null,
+  }
   // NOTE: Options within 'dev' object works only when process.env.NODE_ENV === 'development'
   dev: {
     // Whether to replace binary data (image/screenshot) with HTML
