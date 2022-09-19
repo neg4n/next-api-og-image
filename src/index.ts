@@ -29,6 +29,11 @@ type NextApiRequestWithOgImage = {
   image: string | Buffer
 }
 
+type ChromeOptions = {
+  args?: string[]
+  executable?: string
+}
+
 export type NextApiOgImageConfig<
   Strategy extends StrategyOption,
   StrategyDetails extends string | object = string,
@@ -47,6 +52,7 @@ export type NextApiOgImageConfig<
   type?: ImageType
   quality?: number
   hook?: (request: NextApiRequestWithOgImage) => Map<string, string> | Promise<Map<string, string>>
+  chrome?: ChromeOptions
   dev?: Partial<{
     inspectHtml: boolean
     errorsInResponse: boolean
@@ -72,6 +78,10 @@ export function withOGImage<
     type: 'png',
     quality: 90,
     hook: null,
+    chrome: {
+      args: null,
+      executable: null,
+    },
     dev: {
       inspectHtml: true,
       errorsInResponse: true,
@@ -89,6 +99,7 @@ export function withOGImage<
     hook,
     height,
     quality,
+    chrome: { args, executable },
     dev: { inspectHtml, errorsInResponse },
   } = options
 
@@ -104,7 +115,7 @@ export function withOGImage<
 
   const createBrowserEnvironment = pipe(
     getChromiumExecutable,
-    prepareWebPageFactory({ width, height }),
+    prepareWebPageFactory({ width, height }, { args, executable }),
     createImageFactory({ inspectHtml, type, quality }),
   )
 
@@ -246,7 +257,7 @@ function getChromiumExecutable(browserEnvironment: BrowserEnvironment) {
   return { ...browserEnvironment, executable }
 }
 
-function prepareWebPageFactory(viewPort: Viewport) {
+function prepareWebPageFactory(viewPort: Viewport, chromeOptions: ChromeOptions) {
   return async function (browserEnvironment: BrowserEnvironment) {
     const { page, envMode, executable } = browserEnvironment
 
@@ -254,7 +265,7 @@ function prepareWebPageFactory(viewPort: Viewport) {
       return { ...browserEnvironment, page }
     }
 
-    const chromiumOptions = await getChromiumOptions(envMode, executable)
+    const chromiumOptions = await getChromiumOptions(envMode, executable, chromeOptions)
 
     const browser = await core.launch(chromiumOptions)
     const newPage = await browser.newPage()
@@ -264,9 +275,17 @@ function prepareWebPageFactory(viewPort: Viewport) {
   }
 }
 
-async function getChromiumOptions(envMode: EnvMode, executable: string) {
+async function getChromiumOptions(
+  envMode: EnvMode,
+  defaultExecutable: string,
+  chromeOptions?: ChromeOptions,
+) {
   if (!isProductionLikeMode(envMode)) {
-    return { args: [], executablePath: executable, headless: true }
+    return {
+      args: chromeOptions?.args ?? [],
+      executablePath: chromeOptions?.executable ?? defaultExecutable,
+      headless: true,
+    }
   } else {
     if (isLambda) {
       return {
@@ -275,7 +294,11 @@ async function getChromiumOptions(envMode: EnvMode, executable: string) {
         headless: chrome.headless,
       }
     } else {
-      return { args: [], executablePath: executable, headless: true }
+      return {
+        args: chromeOptions?.args ?? [],
+        executablePath: chromeOptions?.executable ?? defaultExecutable,
+        headless: true,
+      }
     }
   }
 }
