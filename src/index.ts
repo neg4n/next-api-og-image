@@ -49,6 +49,7 @@ export type NextApiOgImageConfig<
   cacheControl?: string
   width?: number
   height?: number
+  deviceScaleFactor?: number
   type?: ImageType
   quality?: number
   hook?: (request: NextApiRequestWithOgImage) => Map<string, string> | Promise<Map<string, string>>
@@ -75,6 +76,7 @@ export function withOGImage<
     cacheControl: 'max-age 3600, must-revalidate',
     width: 1200,
     height: 630,
+    deviceScaleFactor: 1,
     type: 'png',
     quality: 90,
     hook: null,
@@ -98,6 +100,7 @@ export function withOGImage<
     width,
     hook,
     height,
+    deviceScaleFactor,
     quality,
     chrome: { args, executable },
     dev: { inspectHtml, errorsInResponse },
@@ -115,7 +118,7 @@ export function withOGImage<
 
   const createBrowserEnvironment = pipe(
     getChromiumExecutable,
-    prepareWebPageFactory({ width, height }, { args, executable }),
+    prepareWebPageFactory({ width, height, deviceScaleFactor }, { args, executable }),
     createImageFactory({ inspectHtml, type, quality }),
   )
 
